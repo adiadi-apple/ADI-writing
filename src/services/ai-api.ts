@@ -128,6 +128,26 @@ class AIApiService {
     }
   }
 
+  async listGeminiModels(apiKey: string) {
+    try {
+      const backendUrl = `${this.apiBaseUrl}/api/list-models`
+
+      const response = await axios.get(backendUrl, {
+        params: { apiKey },
+        timeout: 30000,
+      })
+
+      return response.data.models || []
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const data = error.response?.data
+        console.error('Failed to list Gemini models:', data?.message || error.message)
+        throw new Error(data?.message || 'Failed to list available Gemini models')
+      }
+      throw error instanceof Error ? error : new Error('Failed to list models')
+    }
+  }
+
   setApiBaseUrl(url: string): void {
     this.apiBaseUrl = url
   }
