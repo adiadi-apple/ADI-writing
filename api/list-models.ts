@@ -22,29 +22,115 @@ interface ErrorResponse {
   code?: string
 }
 
+interface RetryOptions {
+  maxRetries?: number
+  initialDelayMs?: number
+  maxDelayMs?: number
+  backoffMultiplier?: number
+}
+
+const sleep = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms))
+
+async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  options: RetryOptions = {}
+): Promise<T> {
+  const {
+    maxRetries = 3,
+    initialDelayMs = 1000,
+    maxDelayMs = 10000,
+    backoffMultiplier = 2,
+  } = options
+
+  let lastError: Error | null = null
+  let delay = initialDelayMs
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn()
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error))
+
+      const isRateLimitError = error instanceof axios.AxiosError && error.response?.status === 429
+      const isServerError =
+        error instanceof axios.AxiosError && error.response?.status && error.response.status >= 500
+      const isTimeoutError =
+        error instanceof axios.AxiosError &&
+        (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT' || error.code === 'ENOTFOUND')
+
+      const isRetryable = isRateLimitError || isServerError || isTimeoutError
+
+      if (!isRetryable || attempt === maxRetries) {
+        throw lastError
+      }
+
+      let waitTime = delay
+      if (isRateLimitError && error instanceof axios.AxiosError) {
+        const retryAfter = error.response?.headers?.['retry-after']
+        if (retryAfter) {
+          const retryAfterMs = isNaN(Number(retryAfter))
+            ? new Date(retryAfter).getTime() - Date.now()
+            : parseInt(retryAfter, 10) * 1000
+          waitTime = Math.max(0, retryAfterMs)
+        }
+      }
+
+      const jitter = Math.random() * 0.1 * waitTime
+      const finalWaitTime = Math.min(waitTime + jitter, maxDelayMs)
+
+      console.log(
+        `Attempt ${attempt + 1} failed. Retrying in ${Math.round(finalWaitTime)}ms...`,
+        lastError.message
+      )
+
+      await sleep(finalWaitTime)
+
+      delay = Math.min(delay * backoffMultiplier, maxDelayMs)
+    }
+  }
+
+  throw lastError
+}
+
 async function listGeminiModels(apiKey: string): Promise<ModelInfo[]> {
   try {
     // Try v1beta first (has more models), fall back to v1
     let response
     try {
-      response = await axios.get(
-        `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`,
+      response = await retryWithBackoff(
+        () =>
+          axios.get(
+            `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`,
+            {
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              timeout: 30000,
+            }
+          ),
         {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          timeout: 30000,
+          maxRetries: 3,
+          initialDelayMs: 1000,
+          maxDelayMs: 15000,
         }
       )
     } catch (error) {
       // Fall back to v1 if v1beta is not available
-      response = await axios.get(
-        `https://generativelanguage.googleapis.com/v1/models?key=${apiKey}`,
+      response = await retryWithBackoff(
+        () =>
+          axios.get(
+            `https://generativelanguage.googleapis.com/v1/models?key=${apiKey}`,
+            {
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              timeout: 30000,
+            }
+          ),
         {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          timeout: 30000,
+          maxRetries: 3,
+          initialDelayMs: 1000,
+          maxDelayMs: 15000,
         }
       )
     }

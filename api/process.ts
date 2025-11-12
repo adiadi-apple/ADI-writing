@@ -22,6 +22,81 @@ interface ErrorResponse {
   code?: string
 }
 
+interface RetryOptions {
+  maxRetries?: number
+  initialDelayMs?: number
+  maxDelayMs?: number
+  backoffMultiplier?: number
+}
+
+const sleep = (ms: number): Promise<void> => new Promise(resolve => setTimeout(resolve, ms))
+
+async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  options: RetryOptions = {}
+): Promise<T> {
+  const {
+    maxRetries = 3,
+    initialDelayMs = 1000,
+    maxDelayMs = 10000,
+    backoffMultiplier = 2,
+  } = options
+
+  let lastError: Error | null = null
+  let delay = initialDelayMs
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn()
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error))
+
+      // Check if it's a rate limit error or other retryable error
+      const isRateLimitError = error instanceof axios.AxiosError && error.response?.status === 429
+      const isServerError =
+        error instanceof axios.AxiosError && error.response?.status && error.response.status >= 500
+      const isTimeoutError =
+        error instanceof axios.AxiosError &&
+        (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT' || error.code === 'ENOTFOUND')
+
+      const isRetryable = isRateLimitError || isServerError || isTimeoutError
+
+      if (!isRetryable || attempt === maxRetries) {
+        throw lastError
+      }
+
+      // Check for Retry-After header
+      let waitTime = delay
+      if (isRateLimitError && error instanceof axios.AxiosError) {
+        const retryAfter = error.response?.headers?.['retry-after']
+        if (retryAfter) {
+          // Retry-After can be in seconds or HTTP date format
+          const retryAfterMs = isNaN(Number(retryAfter))
+            ? new Date(retryAfter).getTime() - Date.now()
+            : parseInt(retryAfter, 10) * 1000
+          waitTime = Math.max(0, retryAfterMs)
+        }
+      }
+
+      // Add jitter to prevent thundering herd
+      const jitter = Math.random() * 0.1 * waitTime
+      const finalWaitTime = Math.min(waitTime + jitter, maxDelayMs)
+
+      console.log(
+        `Attempt ${attempt + 1} failed. Retrying in ${Math.round(finalWaitTime)}ms...`,
+        lastError.message
+      )
+
+      await sleep(finalWaitTime)
+
+      // Exponential backoff for next attempt
+      delay = Math.min(delay * backoffMultiplier, maxDelayMs)
+    }
+  }
+
+  throw lastError
+}
+
 const SYSTEM_PROMPT = `你和用户一起结对写作来解决他们的问题。你是一位世界一流的专业AI作家助手。
 你的任务是根据用户输入的消息，回答用户的问题。
 
@@ -58,33 +133,39 @@ async function callOpenAI(
 ): Promise<string> {
   const modePrompt = mode === 'expand' ? EXPAND_MODE_PROMPT : POLISH_MODE_PROMPT
 
-  const response = await axios.post(
-    'https://api.openai.com/v1/chat/completions',
-    {
-      model: 'gpt-4o-mini',
-      messages: [
+  return retryWithBackoff(
+    () =>
+      axios.post(
+        'https://api.openai.com/v1/chat/completions',
         {
-          role: 'system',
-          content: SYSTEM_PROMPT,
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: SYSTEM_PROMPT,
+            },
+            {
+              role: 'user',
+              content: `${modePrompt}\n\n内容：\n${content}`,
+            },
+          ],
+          temperature: 0.7,
+          max_tokens: 2000,
         },
         {
-          role: 'user',
-          content: `${modePrompt}\n\n内容：\n${content}`,
-        },
-      ],
-      temperature: 0.7,
-      max_tokens: 2000,
-    },
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          timeout: 30000,
+        }
+      ),
     {
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      timeout: 30000,
+      maxRetries: 3,
+      initialDelayMs: 1000,
+      maxDelayMs: 15000,
     }
-  )
-
-  return response.data.choices[0].message.content
+  ).then(response => response.data.choices[0].message.content)
 }
 
 async function callGemini(
@@ -96,28 +177,36 @@ async function callGemini(
 
   // Use v1beta API version for better model support
   // Using gemini-2.0-flash which is the latest stable model
-  const response = await axios.post(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-    {
-      contents: [
+  const response = await retryWithBackoff(
+    () =>
+      axios.post(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
         {
-          parts: [
+          contents: [
             {
-              text: `${SYSTEM_PROMPT}\n\n${modePrompt}\n\n内容：\n${content}`,
+              parts: [
+                {
+                  text: `${SYSTEM_PROMPT}\n\n${modePrompt}\n\n内容：\n${content}`,
+                },
+              ],
             },
           ],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 2000,
+          },
         },
-      ],
-      generationConfig: {
-        temperature: 0.7,
-        maxOutputTokens: 2000,
-      },
-    },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          timeout: 30000,
+        }
+      ),
     {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      timeout: 30000,
+      maxRetries: 3,
+      initialDelayMs: 1000,
+      maxDelayMs: 15000,
     }
   )
 
@@ -136,33 +225,39 @@ async function callDeepSeek(
 ): Promise<string> {
   const modePrompt = mode === 'expand' ? EXPAND_MODE_PROMPT : POLISH_MODE_PROMPT
 
-  const response = await axios.post(
-    'https://api.deepseek.com/chat/completions',
-    {
-      model: 'deepseek-chat',
-      messages: [
+  return retryWithBackoff(
+    () =>
+      axios.post(
+        'https://api.deepseek.com/chat/completions',
         {
-          role: 'system',
-          content: SYSTEM_PROMPT,
+          model: 'deepseek-chat',
+          messages: [
+            {
+              role: 'system',
+              content: SYSTEM_PROMPT,
+            },
+            {
+              role: 'user',
+              content: `${modePrompt}\n\n内容：\n${content}`,
+            },
+          ],
+          temperature: 0.7,
+          max_tokens: 2000,
         },
         {
-          role: 'user',
-          content: `${modePrompt}\n\n内容：\n${content}`,
-        },
-      ],
-      temperature: 0.7,
-      max_tokens: 2000,
-    },
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          timeout: 30000,
+        }
+      ),
     {
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      timeout: 30000,
+      maxRetries: 3,
+      initialDelayMs: 1000,
+      maxDelayMs: 15000,
     }
-  )
-
-  return response.data.choices[0].message.content
+  ).then(response => response.data.choices[0].message.content)
 }
 
 async function callThirdParty(
@@ -174,33 +269,39 @@ async function callThirdParty(
 ): Promise<string> {
   const modePrompt = mode === 'expand' ? EXPAND_MODE_PROMPT : POLISH_MODE_PROMPT
 
-  const response = await axios.post(
-    customEndpoint,
-    {
-      model: customModel,
-      messages: [
+  return retryWithBackoff(
+    () =>
+      axios.post(
+        customEndpoint,
         {
-          role: 'system',
-          content: SYSTEM_PROMPT,
+          model: customModel,
+          messages: [
+            {
+              role: 'system',
+              content: SYSTEM_PROMPT,
+            },
+            {
+              role: 'user',
+              content: `${modePrompt}\n\n内容：\n${content}`,
+            },
+          ],
+          temperature: 0.7,
+          max_tokens: 2000,
         },
         {
-          role: 'user',
-          content: `${modePrompt}\n\n内容：\n${content}`,
-        },
-      ],
-      temperature: 0.7,
-      max_tokens: 2000,
-    },
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          timeout: 30000,
+        }
+      ),
     {
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      timeout: 30000,
+      maxRetries: 3,
+      initialDelayMs: 1000,
+      maxDelayMs: 15000,
     }
-  )
-
-  return response.data.choices[0].message.content
+  ).then(response => response.data.choices[0].message.content)
 }
 
 async function processContent(
