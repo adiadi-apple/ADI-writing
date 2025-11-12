@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { AIProvider, ApiConfig } from '../types'
+import type { ApiConfig } from '../types'
 import { STORAGE_KEYS } from '../config/constants'
 
 const STORAGE_KEY = STORAGE_KEYS.API_CONFIG

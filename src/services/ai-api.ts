@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { AIProvider, AIRequest, AIResponse } from '../types'
+import type { AIRequest, AIResponse } from '../types'
 
 // Determine the API base URL based on environment
 const getApiBaseUrl = (): string => {
