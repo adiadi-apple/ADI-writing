@@ -236,16 +236,34 @@ export default async (req: VercelRequest, res: VercelResponse) => {
       } as ErrorResponse)
     }
 
-    if (!apiKey || apiKey.trim().length === 0) {
+    // Try to get API key from request or environment variables
+    let finalApiKey = apiKey?.trim() || ''
+
+    // If no API key in request, try environment variables
+    if (!finalApiKey) {
+      switch (provider) {
+        case 'openai':
+          finalApiKey = process.env.OPENAI_API_KEY || ''
+          break
+        case 'gemini':
+          finalApiKey = process.env.GEMINI_API_KEY || ''
+          break
+        case 'deepseek':
+          finalApiKey = process.env.DEEPSEEK_API_KEY || ''
+          break
+      }
+    }
+
+    if (!finalApiKey) {
       return res.status(401).json({
         error: 'Unauthorized',
-        message: 'API key is required',
+        message: `API key for ${provider} is required. Provide it in request or configure it in Vercel environment variables.`,
         code: 'MISSING_API_KEY',
       } as ErrorResponse)
     }
 
     // Process content
-    const result = await processContent(provider, apiKey.trim(), content, mode)
+    const result = await processContent(provider, finalApiKey, content, mode)
 
     return res.status(200).json({
       result,

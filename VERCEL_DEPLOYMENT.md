@@ -20,10 +20,12 @@
 
 1. Vercel 账户（免费注册）
 2. GitHub 账户
-3. AI 提供商的 API 密钥：
+3. AI 提供商的 API 密钥（**可选** - 部署时可以跳过）：
    - OpenAI API Key
    - Google Gemini API Key
    - DeepSeek API Key
+
+**注意：** 您可以先部署应用而不配置任何 API 密钥，用户可以在前端输入。或稍后在 Vercel 仪表板中添加环境变量。
 
 ### 一键部署
 
@@ -63,8 +65,8 @@ vercel
    - 搜索并选择您的 `h5-ai-writer` 仓库
    - 点击 "Import"
 
-3. **配置环境变量**
-   - 在 "Environment Variables" 部分添加：
+3. **配置环境变量**（可选）
+   - 在 "Environment Variables" 部分添加（全部可选）：
 
    ```
    OPENAI_API_KEY=your_openai_api_key
@@ -72,7 +74,8 @@ vercel
    DEEPSEEK_API_KEY=your_deepseek_api_key
    ```
 
-   或者分别添加只需要的 API 密钥
+   - 或者只添加需要的 API 密钥
+   - 或者完全跳过，用户可以在前端输入
 
 4. **部署**
    - 点击 "Deploy"
@@ -85,11 +88,25 @@ vercel
 
 ## 环境变量配置
 
+### 配置是完全可选的
+
+应用支持两种工作模式：
+
+1. **用户输入模式**（推荐快速开始）
+   - 不配置任何环境变量
+   - 用户在前端输入 API 密钥
+   - 密钥保存在用户浏览器本地
+
+2. **服务器模式**（推荐团队使用）
+   - 在 Vercel 环境变量中配置密钥
+   - 后端使用这些密钥调用 AI API
+   - 用户无需输入密钥，更方便
+
 ### 在 Vercel 仪表板中配置
 
 1. 进入项目 Settings
 2. 点击 Environment Variables
-3. 添加以下变量：
+3. 添加以下变量（全部可选）：
 
 | 变量名 | 值 | 说明 |
 |------|---|------|
@@ -314,12 +331,13 @@ Error: Failed to build
 ### 环境变量未设置
 
 ```
-Unauthorized: API key is required
+Unauthorized: API key is required. Provide it in request or configure it in Vercel environment variables.
 ```
 
 **解决方案：**
-- 确保在 Vercel 中设置了环境变量
-- 重新部署以应用新变量
+- 方案 A：用户在前端输入 API 密钥
+- 方案 B：在 Vercel 中设置环境变量
+- 方案 C：重新部署以应用新变量
 - 检查变量名称是否正确
 
 ## 成本估算
@@ -409,6 +427,12 @@ A: Vercel Serverless Functions 不支持 WebSocket，但 Vercel Edge Functions �
 
 ## 相关资源
 
+### 项目文档
+- [云函数完整指南](CLOUD_FUNCTIONS_DEPLOYMENT.md) - 云函数详细文档和 API 使用
+- [后端架构说明](BACKEND_ARCHITECTURE.md) - 后端设计和实现
+- [常见问题解答](BACKEND_FAQ.md) - 50+ 问答
+
+### 官方文档
 - [Vercel 官方文档](https://vercel.com/docs)
 - [Vercel Serverless Functions](https://vercel.com/docs/serverless-functions/introduction)
 - [Vercel 环境变量](https://vercel.com/docs/concepts/projects/environment-variables)

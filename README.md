@@ -4,7 +4,11 @@
 
 ## 一键部署
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fyour-username%2Fh5-ai-writer&env=OPENAI_API_KEY,GEMINI_API_KEY,DEEPSEEK_API_KEY)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fyour-username%2Fh5-ai-writer&env=OPENAI_API_KEY,GEMINI_API_KEY,DEEPSEEK_API_KEY&envDescription=AI%20API%20Keys%20(Optional)&envLink=https://h5-ai-writer.vercel.app)
+
+**注意：** API 密钥配置是**可选**的。您可以：
+- **不配置** - 直接部署，用户在前端输入 API 密钥
+- **配置** - 在 Vercel 环境变量中预配置 API 密钥
 
 ## 功能特性
 
@@ -169,14 +173,22 @@ MIT License - 详见 LICENSE 文件
 
 ### Vercel 一键部署（推荐）
 
-1. 点击上方的 "Deploy with Vercel" 按钮
-2. 或访问 https://vercel.com/new
-3. 连接您的 GitHub 账户
-4. 导入此项目
-5. 添加环境变量（API 密钥）
-6. 点击部署
+**最简单的部署方式 - 只需 3 步：**
 
-详细步骤请查看 [VERCEL_DEPLOYMENT.md](VERCEL_DEPLOYMENT.md)
+1. 点击上方的 "Deploy with Vercel" 按钮
+2. 授权并跳过或配置环境变量（可选）
+3. 点击部署 - 完成！
+
+**如果需要详细信息：**
+- [VERCEL_DEPLOYMENT.md](VERCEL_DEPLOYMENT.md) - 详细部署指南
+- [CLOUD_FUNCTIONS_DEPLOYMENT.md](CLOUD_FUNCTIONS_DEPLOYMENT.md) - 云函数完整文档
+
+### 快速部署（无需 API 密钥）
+
+1. 点击"Deploy with Vercel"按钮
+2. 在环境变量步骤，点击"Skip"或直接部署
+3. 等待 2-5 分钟
+4. 应用上线！用户可以在前端输入 API 密钥
 
 ### 其他部署选项
 
@@ -197,8 +209,11 @@ MIT License - 详见 LICENSE 文件
 
 ## 常见问题
 
+### Q: 部署时一定要填写 API 密钥吗？
+A: 不需要。您可以直接部署而无需任何 API 密钥。应用会正常运行，用户可以在前端输入 API 密钥。稍后也可以在 Vercel 环境变量中配置密钥。
+
 ### Q: 可以在 Vercel 免费计划上运行吗？
-A: 是的，完全可以。Vercel 免费计划包括足够的 Serverless Functions 调用。
+A: 是的，完全可以。Vercel 免费计划包括足够的 Serverless Functions 调用，足以支持个人使用。
 
 ### Q: 后端会存储我的数据吗？
 A: 不会。后端只转发请求到 AI API，不存储任何用户数据。
@@ -216,7 +231,9 @@ A: 前端可以离线使用，但处理内容需要网络连接和有效的 API 
 A: 是的，可以编辑 `api/process.ts` 文件中的提示词（需要 fork 项目）。
 
 ### Q: API 密钥在哪里？
-A: 在 Vercel 部署时，密钥存储在 Vercel 环境变量中（更安全）。在本地开发时，存储在浏览器本地存储中。
+A: 有两种模式：
+1. **用户输入模式**：用户在前端输入 API 密钥，存储在浏览器本地
+2. **服务器模式**：密钥存储在 Vercel 环境变量中（更安全，推荐团队使用）
 
 ## 联系方式
 
