@@ -106,7 +106,7 @@ class AIApiService {
         {
           id: 'gemini',
           name: 'Google Gemini',
-          description: 'Gemini 1.5 Flash',
+          description: 'Gemini 2.0 Flash',
           url: 'https://aistudio.google.com/app/apikey',
           status: 'active',
         },

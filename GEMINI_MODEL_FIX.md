@@ -1,17 +1,17 @@
-# Gemini 1.5 Flash Model Fix
+# Gemini Model Update - Using gemini-2.0-flash
 
 ## Problem
-Error: `models/gemini-1.5-flash is not found for API version v1, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.`
+Error: `models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.`
 
 ## Root Cause
-The original code was using the v1 API endpoint with `gemini-1.5-flash` model, which may not be available or properly supported in that version.
+The `gemini-1.5-flash` model is no longer available in either v1 or v1beta API versions. Google has updated to newer model versions, with `gemini-2.0-flash` being the current recommended model.
 
 ## Solution
 
-### 1. **Updated API Version (api/process.ts)**
-- Changed from: `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent`
-- Changed to: `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`
-- The v1beta API provides better support for newer models like Gemini 1.5 Flash
+### 1. **Updated Model to gemini-2.0-flash (api/process.ts)**
+- Changed from: `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`
+- Changed to: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`
+- gemini-2.0-flash is Google's latest stable model with better performance and capabilities
 
 ### 2. **Added ListModels API Endpoint (api/list-models.ts)**
 - New endpoint: `/api/list-models`
@@ -44,8 +44,8 @@ curl "http://localhost/api/list-models?apiKey=YOUR_API_KEY"
 {
   "models": [
     {
-      "name": "models/gemini-1.5-flash",
-      "displayName": "Gemini 1.5 Flash",
+      "name": "models/gemini-2.0-flash",
+      "displayName": "Gemini 2.0 Flash",
       "description": "...",
       "version": "001",
       "inputTokenLimit": 1000000,
@@ -59,7 +59,7 @@ curl "http://localhost/api/list-models?apiKey=YOUR_API_KEY"
 
 ## Migration Notes
 - No breaking changes to existing API
-- Default Gemini model remains `gemini-1.5-flash`
+- Default Gemini model updated to `gemini-2.0-flash`
 - Vercel deployment compatible
 - Environment variable support: `GEMINI_API_KEY`
 

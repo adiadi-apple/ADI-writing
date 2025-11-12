@@ -95,8 +95,9 @@ async function callGemini(
   const modePrompt = mode === 'expand' ? EXPAND_MODE_PROMPT : POLISH_MODE_PROMPT
 
   // Use v1beta API version for better model support
+  // Using gemini-2.0-flash which is the latest stable model
   const response = await axios.post(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
     {
       contents: [
         {

@@ -1,20 +1,20 @@
-# Fix Summary: Gemini 1.5 Flash Model Not Found Error
+# Fix Summary: Updated to gemini-2.0-flash Model
 
 ## Issue
-Error: `models/gemini-1.5-flash is not found for API version v1, or is not supported for generateContent`
+Error: `models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent`
 
-This error occurred when trying to use the Gemini 1.5 Flash model with the v1 API endpoint.
+The `gemini-1.5-flash` model is no longer available in Google's Gemini API. The model has been deprecated in favor of newer versions.
 
 ## Solution Overview
-The fix involves three key changes:
+The fix involves updating to the current stable model:
 
-### 1. API Version Update
+### 1. Model Update to gemini-2.0-flash
 **File**: `api/process.ts` (line 99)
-**Change**: Updated Gemini API endpoint from v1 to v1beta
-- **Before**: `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent`
-- **After**: `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`
+**Change**: Updated Gemini API to use gemini-2.0-flash
+- **Before**: `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`
+- **After**: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`
 
-**Reason**: v1beta provides better support for Gemini 1.5 Flash and other newer models.
+**Reason**: gemini-2.0-flash is Google's current recommended stable model with better performance and broader API support.
 
 ### 2. New ListModels API Endpoint
 **File**: `api/list-models.ts` (new file)
@@ -38,8 +38,8 @@ GET /api/list-models?apiKey=YOUR_API_KEY
 {
   "models": [
     {
-      "name": "models/gemini-1.5-flash",
-      "displayName": "Gemini 1.5 Flash",
+      "name": "models/gemini-2.0-flash",
+      "displayName": "Gemini 2.0 Flash",
       "description": "...",
       "supportedGenerationMethods": ["generateContent", "countTokens"]
     }
