@@ -2,9 +2,9 @@
   <div class="editor-container">
     <div class="sidebar">
       <div class="sidebar-header">
-        <h1>H5 AI Writer</h1>
-        <button class="icon-btn" @click="showSettings = true" title="设置">⚙️</button>
-      </div>
+         <h1>ADI Writer</h1>
+         <button class="icon-btn" @click="showSettings = true" title="设置">⚙️</button>
+       </div>
 
       <div class="documents-section">
         <button class="new-doc-btn" @click="createNewDocument">
@@ -200,6 +200,8 @@ const processContent = async (mode: 'expand' | 'polish') => {
       apiKey: appStore.apiConfig.apiKey,
       content: currentDocument.value.content,
       mode,
+      customEndpoint: appStore.apiConfig.customEndpoint,
+      customModel: appStore.apiConfig.customModel,
     })
 
     resultContent.value = response.result
@@ -241,6 +243,7 @@ const getProviderName = (provider: string) => {
     openai: 'OpenAI',
     gemini: 'Gemini',
     deepseek: 'DeepSeek',
+    thirdparty: 'Custom Service',
   }
   return names[provider] || provider
 }

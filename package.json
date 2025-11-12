@@ -1,7 +1,7 @@
 {
-  "name": "h5-ai-writer",
+  "name": "adi-writer",
   "version": "1.0.0",
-  "description": "Open source free H5 AI writing web app for novel expansion and polishing",
+  "description": "ADI Writer - Help you complete scripts, novels, poetry, biographies. An AI-powered writing assistant that helps you express your infinite imagination.",
   "type": "module",
   "scripts": {
     "dev": "vite",

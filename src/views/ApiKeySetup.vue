@@ -2,54 +2,85 @@
   <div class="setup-container">
     <div class="setup-card">
       <div class="header">
-        <h1>H5 AI Writer</h1>
-        <p>小说扩写润色工具</p>
-      </div>
+         <h1>ADI Writer</h1>
+         <p>书写你的故事</p>
+       </div>
 
-      <div class="content">
-        <div class="info-box">
-          <h2>欢迎使用 H5 AI Writer</h2>
-          <p>这是一个开源免费的小说扩写和润色工具，支持多个 AI 模型。</p>
-          <p>首次使用需要配置您的 API 密钥。</p>
-        </div>
+       <div class="content">
+         <div class="info-box">
+           <h2>欢迎使用 ADI Writer</h2>
+           <p>你是否曾有过天马行空的想法，却苦于无法用语言表达？使用 ADI Writer，帮助你完成剧本、小说、诗歌、传记，书写你的故事。</p>
+           <p>首次使用需要配置您的 API 密钥。</p>
+         </div>
 
         <form @submit.prevent="handleSubmit" class="form">
-          <div class="form-group">
-            <label for="provider">选择 AI 模型提供商</label>
-            <select v-model="selectedProvider" id="provider" class="input">
-              <option value="openai">OpenAI (GPT-3.5 Turbo)</option>
-              <option value="gemini">Google Gemini (Google AI Studio)</option>
-              <option value="deepseek">DeepSeek</option>
-            </select>
-          </div>
+           <div class="form-group">
+             <label for="provider">选择 AI 模型提供商</label>
+             <select v-model="selectedProvider" id="provider" class="input">
+               <option value="openai">OpenAI (GPT-4o Mini)</option>
+               <option value="gemini">Google Gemini (Gemini 1.5 Flash)</option>
+               <option value="deepseek">DeepSeek</option>
+               <option value="thirdparty">Custom Service (Third-party)</option>
+             </select>
+           </div>
 
-          <div class="provider-info">
-            <div v-if="selectedProvider === 'openai'" class="info">
-              <h4>OpenAI</h4>
-              <p>获取 API 密钥：<a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com</a></p>
-            </div>
-            <div v-else-if="selectedProvider === 'gemini'" class="info">
-              <h4>Google Gemini</h4>
-              <p>获取 API 密钥：<a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a></p>
-            </div>
-            <div v-else-if="selectedProvider === 'deepseek'" class="info">
-              <h4>DeepSeek</h4>
-              <p>获取 API 密钥：<a href="https://platform.deepseek.com/api" target="_blank">platform.deepseek.com</a></p>
-            </div>
-          </div>
+           <div class="provider-info">
+             <div v-if="selectedProvider === 'openai'" class="info">
+               <h4>OpenAI</h4>
+               <p>获取 API 密钥：<a href="https://platform.openai.com/api-keys" target="_blank">platform.openai.com</a></p>
+             </div>
+             <div v-else-if="selectedProvider === 'gemini'" class="info">
+               <h4>Google Gemini</h4>
+               <p>获取 API 密钥：<a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a></p>
+             </div>
+             <div v-else-if="selectedProvider === 'deepseek'" class="info">
+               <h4>DeepSeek</h4>
+               <p>获取 API 密钥：<a href="https://platform.deepseek.com/api" target="_blank">platform.deepseek.com</a></p>
+             </div>
+             <div v-else-if="selectedProvider === 'thirdparty'" class="info">
+               <h4>Custom Service</h4>
+               <p>使用您自己的 API 服务或第三方提供商</p>
+             </div>
+           </div>
 
-          <div class="form-group">
-            <label for="apikey">API 密钥</label>
-            <input
-              v-model="apiKey"
-              id="apikey"
-              type="password"
-              class="input"
-              placeholder="请输入您的 API 密钥"
-              required
-            />
-            <small>您的 API 密钥仅保存在本地浏览器中</small>
-          </div>
+           <div class="form-group">
+             <label for="apikey">API 密钥</label>
+             <input
+               v-model="apiKey"
+               id="apikey"
+               type="password"
+               class="input"
+               placeholder="请输入您的 API 密钥"
+               required
+             />
+             <small>您的 API 密钥仅保存在本地浏览器中</small>
+           </div>
+
+           <div v-if="selectedProvider === 'thirdparty'" class="form-group">
+             <label for="endpoint">API 端点</label>
+             <input
+               v-model="customEndpoint"
+               id="endpoint"
+               type="url"
+               class="input"
+               placeholder="例如: https://api.example.com/v1/chat/completions"
+               required
+             />
+             <small>您的自定义 API 端点地址</small>
+           </div>
+
+           <div v-if="selectedProvider === 'thirdparty'" class="form-group">
+             <label for="model">模型名称</label>
+             <input
+               v-model="customModel"
+               id="model"
+               type="text"
+               class="input"
+               placeholder="例如: gpt-4o-mini"
+               required
+             />
+             <small>您要使用的模型名称</small>
+           </div>
 
           <div class="checkbox-group">
             <input
@@ -64,7 +95,7 @@
             </label>
           </div>
 
-          <button type="submit" class="submit-btn" :disabled="!agreeTerms || !apiKey">
+          <button type="submit" class="submit-btn" :disabled="!agreeTerms || !apiKey || (selectedProvider === 'thirdparty' && (!customEndpoint || !customModel))">
             开始使用
           </button>
         </form>
@@ -89,17 +120,27 @@ import { ref } from 'vue'
 import { useAppStore } from '../stores/app'
 
 const appStore = useAppStore()
-const selectedProvider = ref<'openai' | 'gemini' | 'deepseek'>('openai')
+const selectedProvider = ref<'openai' | 'gemini' | 'deepseek' | 'thirdparty'>('openai')
 const apiKey = ref('')
+const customEndpoint = ref('')
+const customModel = ref('')
 const agreeTerms = ref(false)
 
 const handleSubmit = () => {
   if (!apiKey.value.trim() || !agreeTerms.value) return
 
-  appStore.saveConfig({
+  const config: any = {
     provider: selectedProvider.value,
     apiKey: apiKey.value.trim(),
-  })
+  }
+
+  if (selectedProvider.value === 'thirdparty') {
+    if (!customEndpoint.value.trim() || !customModel.value.trim()) return
+    config.customEndpoint = customEndpoint.value.trim()
+    config.customModel = customModel.value.trim()
+  }
+
+  appStore.saveConfig(config)
 }
 </script>
 

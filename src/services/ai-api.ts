@@ -37,6 +37,8 @@ class AIApiService {
           content: request.content,
           mode: request.mode,
           apiKey: request.apiKey,
+          customEndpoint: request.customEndpoint,
+          customModel: request.customModel,
         },
         {
           headers: {
@@ -97,22 +99,29 @@ class AIApiService {
         {
           id: 'openai',
           name: 'OpenAI',
-          description: 'GPT-3.5 Turbo',
+          description: 'GPT-4o Mini',
           url: 'https://platform.openai.com/api-keys',
           status: 'active',
         },
         {
           id: 'gemini',
           name: 'Google Gemini',
-          description: 'Google AI Studio',
+          description: 'Gemini 1.5 Flash',
           url: 'https://aistudio.google.com/app/apikey',
           status: 'active',
         },
         {
           id: 'deepseek',
           name: 'DeepSeek',
-          description: 'DeepSeek API',
+          description: 'DeepSeek Chat',
           url: 'https://platform.deepseek.com/api',
+          status: 'active',
+        },
+        {
+          id: 'thirdparty',
+          name: 'Custom Service',
+          description: 'Use your own API service or third-party provider',
+          url: '#',
           status: 'active',
         },
       ]

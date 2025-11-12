@@ -35,7 +35,7 @@ export default (req: VercelRequest, res: VercelResponse) => {
     {
       id: 'openai',
       name: 'OpenAI',
-      description: 'GPT-3.5 Turbo - State-of-the-art language model',
+      description: 'GPT-4o Mini - State-of-the-art language model',
       url: 'https://platform.openai.com/api-keys',
       icon: '🔐',
       status: 'active',
@@ -43,7 +43,7 @@ export default (req: VercelRequest, res: VercelResponse) => {
     {
       id: 'gemini',
       name: 'Google Gemini',
-      description: 'Google AI Studio - Powerful multimodal model',
+      description: 'Gemini 1.5 Flash - Powerful multimodal model',
       url: 'https://aistudio.google.com/app/apikey',
       icon: '🌐',
       status: 'active',
@@ -51,9 +51,17 @@ export default (req: VercelRequest, res: VercelResponse) => {
     {
       id: 'deepseek',
       name: 'DeepSeek',
-      description: 'DeepSeek API - Advanced reasoning model',
+      description: 'DeepSeek Chat - Advanced reasoning model',
       url: 'https://platform.deepseek.com/api',
       icon: '🚀',
+      status: 'active',
+    },
+    {
+      id: 'thirdparty',
+      name: 'Custom Service',
+      description: 'Use your own API service or third-party provider',
+      url: '#',
+      icon: '⚙️',
       status: 'active',
     },
   ]

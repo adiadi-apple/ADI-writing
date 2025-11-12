@@ -2,10 +2,12 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import axios from 'axios'
 
 interface ProcessRequest {
-  provider: 'openai' | 'gemini' | 'deepseek'
+  provider: 'openai' | 'gemini' | 'deepseek' | 'thirdparty'
   content: string
   mode: 'expand' | 'polish'
   apiKey?: string
+  customEndpoint?: string
+  customModel?: string
 }
 
 interface ProcessResponse {
@@ -59,7 +61,7 @@ async function callOpenAI(
   const response = await axios.post(
     'https://api.openai.com/v1/chat/completions',
     {
-      model: 'gpt-3.5-turbo',
+      model: 'gpt-4o-mini',
       messages: [
         {
           role: 'system',
@@ -93,7 +95,7 @@ async function callGemini(
   const modePrompt = mode === 'expand' ? EXPAND_MODE_PROMPT : POLISH_MODE_PROMPT
 
   const response = await axios.post(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
     {
       contents: [
         {
@@ -161,11 +163,51 @@ async function callDeepSeek(
   return response.data.choices[0].message.content
 }
 
+async function callThirdParty(
+  apiKey: string,
+  content: string,
+  mode: 'expand' | 'polish',
+  customEndpoint: string,
+  customModel: string
+): Promise<string> {
+  const modePrompt = mode === 'expand' ? EXPAND_MODE_PROMPT : POLISH_MODE_PROMPT
+
+  const response = await axios.post(
+    customEndpoint,
+    {
+      model: customModel,
+      messages: [
+        {
+          role: 'system',
+          content: SYSTEM_PROMPT,
+        },
+        {
+          role: 'user',
+          content: `${modePrompt}\n\n内容：\n${content}`,
+        },
+      ],
+      temperature: 0.7,
+      max_tokens: 2000,
+    },
+    {
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      timeout: 30000,
+    }
+  )
+
+  return response.data.choices[0].message.content
+}
+
 async function processContent(
   provider: string,
   apiKey: string,
   content: string,
-  mode: string
+  mode: string,
+  customEndpoint?: string,
+  customModel?: string
 ): Promise<string> {
   switch (provider) {
     case 'openai':
@@ -174,6 +216,11 @@ async function processContent(
       return await callGemini(apiKey, content, mode as 'expand' | 'polish')
     case 'deepseek':
       return await callDeepSeek(apiKey, content, mode as 'expand' | 'polish')
+    case 'thirdparty':
+      if (!customEndpoint || !customModel) {
+        throw new Error('Custom endpoint and model are required for third-party provider')
+      }
+      return await callThirdParty(apiKey, content, mode as 'expand' | 'polish', customEndpoint, customModel)
     default:
       throw new Error(`Unsupported provider: ${provider}`)
   }
@@ -202,7 +249,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
   }
 
   try {
-    const { provider, content, mode, apiKey } = req.body as ProcessRequest
+    const { provider, content, mode, apiKey, customEndpoint, customModel } = req.body as ProcessRequest
 
     // Validation
     if (!provider || !content || !mode) {
@@ -212,11 +259,19 @@ export default async (req: VercelRequest, res: VercelResponse) => {
       } as ErrorResponse)
     }
 
-    if (!['openai', 'gemini', 'deepseek'].includes(provider)) {
+    if (!['openai', 'gemini', 'deepseek', 'thirdparty'].includes(provider)) {
       return res.status(400).json({
         error: 'Invalid provider',
-        message: `Provider must be one of: openai, gemini, deepseek`,
+        message: `Provider must be one of: openai, gemini, deepseek, thirdparty`,
         code: 'INVALID_PROVIDER',
+      } as ErrorResponse)
+    }
+
+    if (provider === 'thirdparty' && (!customEndpoint || !customModel)) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        message: 'customEndpoint and customModel are required for thirdparty provider',
+        code: 'INVALID_REQUEST',
       } as ErrorResponse)
     }
 
@@ -263,7 +318,7 @@ export default async (req: VercelRequest, res: VercelResponse) => {
     }
 
     // Process content
-    const result = await processContent(provider, finalApiKey, content, mode)
+    const result = await processContent(provider, finalApiKey, content, mode, customEndpoint, customModel)
 
     return res.status(200).json({
       result,

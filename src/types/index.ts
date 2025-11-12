@@ -1,9 +1,11 @@
-export type AIProvider = 'openai' | 'gemini' | 'deepseek'
+export type AIProvider = 'openai' | 'gemini' | 'deepseek' | 'thirdparty'
 export type ProcessMode = 'expand' | 'polish'
 
 export interface ApiConfig {
   provider: AIProvider
   apiKey: string
+  customEndpoint?: string
+  customModel?: string
 }
 
 export interface Document {
@@ -19,6 +21,8 @@ export interface AIRequest {
   apiKey: string
   content: string
   mode: ProcessMode
+  customEndpoint?: string
+  customModel?: string
 }
 
 export interface AIResponse {
