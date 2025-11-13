@@ -151,20 +151,21 @@ const handleSubmit = () => {
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(180deg, #f5f5f7 0%, #ffffff 100%);
 }
 
 .setup-card {
   background: var(--bg-white);
-  border-radius: 12px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  border-radius: 20px;
+  box-shadow: var(--shadow-lg);
   width: 100%;
   max-width: 600px;
   overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(180deg, #007aff 0%, #0051cc 100%);
   color: white;
   padding: 40px 30px;
   text-align: center;
@@ -186,11 +187,12 @@ const handleSubmit = () => {
 }
 
 .info-box {
-  background: #f0f4ff;
-  border-left: 4px solid var(--primary-color);
+  background: rgba(0, 122, 255, 0.08);
+  border-left: none;
+  border-radius: 12px;
   padding: 15px 20px;
-  border-radius: 4px;
   margin-bottom: 30px;
+  border: 1px solid rgba(0, 122, 255, 0.15);
 }
 
 .info-box h2 {
@@ -223,16 +225,18 @@ const handleSubmit = () => {
 .input {
   width: 100%;
   padding: 12px 15px;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
   font-size: 1rem;
-  transition: border-color 0.3s;
+  transition: all 0.3s ease;
+  background-color: #f5f5f7;
 }
 
 .input:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  background-color: var(--bg-white);
+  box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
 }
 
 .form-group small {
@@ -243,10 +247,11 @@ const handleSubmit = () => {
 }
 
 .provider-info {
-  background: #f9fafb;
+  background: #f5f5f7;
   padding: 15px;
-  border-radius: 6px;
+  border-radius: 12px;
   margin-bottom: 20px;
+  border: 1px solid #e5e7eb;
 }
 
 .provider-info .info h4 {
@@ -290,17 +295,23 @@ const handleSubmit = () => {
 .submit-btn {
   width: 100%;
   padding: 14px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(180deg, #007aff 0%, #0051cc 100%);
   color: white;
   font-size: 1.1rem;
   font-weight: 600;
-  border-radius: 6px;
-  transition: transform 0.2s, box-shadow 0.2s;
+  border-radius: 12px;
+  border: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
 }
 
 .submit-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(0, 122, 255, 0.4);
+}
+
+.submit-btn:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .submit-btn:disabled {
