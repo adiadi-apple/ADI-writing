@@ -5,73 +5,92 @@
 }
 
 :root {
+  /* iOS 17/18 Color Palette - Apple Colors */
   --primary-color: #007aff;
   --primary-dark: #0051cc;
   --secondary-color: #34c759;
   --danger-color: #ff3b30;
-  --border-color: #e5e7eb;
-  --border-light: #e5e7eb;
-  --text-color: #1f2937;
-  --text-light: #6b7280;
-  --text-lighter: #9ca3af;
+  --warning-color: #ff9500;
+  
+  /* Text Colors - Apple typography hierarchy */
+  --text-color: #1d1d1f;
+  --text-light: #6e6e73;
+  --text-lighter: #a1a1a6;
+  
+  /* Background Colors - iOS light mode */
   --bg-color: #f5f5f7;
   --bg-white: #ffffff;
+  --bg-secondary: #f9f9fb;
+  
+  /* Border Colors - Subtle iOS separators */
+  --border-color: #e5e7eb;
+  --border-light: #d5d5d7;
+  
+  /* Shadow System - iOS 17/18 refined shadows */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.12);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.15);
+  --shadow-xl: 0 12px 32px rgba(0, 0, 0, 0.2);
 }
 
+/* iOS 17/18 Typography - System font with refined settings */
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
   background-color: var(--bg-color);
   color: var(--text-color);
+  line-height: 1.5;
+  letter-spacing: -0.02em;
 }
 
+/* iOS 17/18 Links - Smooth interactions */
 a {
   color: var(--primary-color);
   text-decoration: none;
-  transition: color 0.2s ease;
+  transition: color 0.2s ease, opacity 0.15s ease;
 }
 
 a:hover {
   color: var(--primary-dark);
+  opacity: 0.9;
 }
 
 a:active {
   opacity: 0.7;
 }
 
+/* iOS 17/18 Buttons - Refined interactions */
 button {
   cursor: pointer;
   border: none;
   font-family: inherit;
   font-size: inherit;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 button:disabled {
   cursor: not-allowed;
-  opacity: 0.5;
+  opacity: 0.6;
 }
 
+/* iOS 17/18 Form Elements - Refined interactions */
 input,
 textarea {
   font-family: inherit;
   font-size: 1rem;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-/* Focus visible for better accessibility */
+/* iOS 17/18 Accessibility - Focus indicators */
 *:focus-visible {
   outline: 2px solid var(--primary-color);
   outline-offset: 2px;
 }
 
-/* Scrollbar styling - Apple refined */
+/* iOS 17/18 Scrollbar - Refined appearance */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -82,25 +101,27 @@ textarea {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.15);
   border-radius: 5px;
   border: 2px solid transparent;
   background-clip: padding-box;
+  transition: background 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.25);
   background-clip: padding-box;
 }
 
-/* Selection styling */
+/* iOS 17/18 Text Selection */
 ::selection {
-  background: rgba(0, 122, 255, 0.25);
+  background: rgba(0, 122, 255, 0.3);
   color: var(--text-color);
 }
 
-/* Placeholder styling */
+/* iOS 17/18 Placeholder Text */
 ::placeholder {
   color: var(--text-lighter);
   opacity: 1;
+  font-weight: 400;
 }
