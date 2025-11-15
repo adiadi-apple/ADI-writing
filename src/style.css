@@ -5,52 +5,58 @@
 }
 
 :root {
-  /* iOS 17/18 Color Palette - Apple Colors */
-  --primary-color: #007aff;
-  --primary-dark: #0051cc;
+  --primary-color: #0071e3;
+  --primary-dark: #004ba0;
   --secondary-color: #34c759;
   --danger-color: #ff3b30;
-  --warning-color: #ff9500;
-  
-  /* Text Colors - Apple typography hierarchy */
-  --text-color: #1d1d1f;
+  --warning-color: #f2a43f;
+
+  --text-color: #111113;
   --text-light: #6e6e73;
   --text-lighter: #a1a1a6;
-  
-  /* Background Colors - iOS light mode */
+
   --bg-color: #f5f5f7;
-  --bg-white: #ffffff;
-  --bg-secondary: #f9f9fb;
-  
-  /* Border Colors - Subtle iOS separators */
-  --border-color: #e5e7eb;
-  --border-light: #d5d5d7;
-  
-  /* Shadow System - iOS 17/18 refined shadows */
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.12);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.15);
-  --shadow-xl: 0 12px 32px rgba(0, 0, 0, 0.2);
+  --bg-muted: #eceef3;
+  --bg-white: rgba(255, 255, 255, 0.92);
+  --bg-secondary: rgba(255, 255, 255, 0.75);
+
+  --border-color: rgba(15, 23, 42, 0.08);
+  --border-light: rgba(15, 23, 42, 0.05);
+  --border-strong: rgba(15, 15, 15, 0.15);
+
+  --radius-xl: 32px;
+  --radius-lg: 20px;
+  --radius-md: 14px;
+  --blur-strength: 28px;
+
+  --shadow-soft: 0 25px 80px rgba(15, 23, 42, 0.08);
+  --shadow-card: 0 20px 50px rgba(15, 23, 42, 0.12);
+  --shadow-elevated: 0 35px 70px rgba(15, 23, 42, 0.15);
 }
 
-/* iOS 17/18 Typography - System font with refined settings */
 body {
-  font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-family: 'SF Pro Display', 'SF Pro Text', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  background-color: var(--bg-color);
   color: var(--text-color);
-  line-height: 1.5;
-  letter-spacing: -0.02em;
+  line-height: 1.6;
+  letter-spacing: -0.015em;
+  min-height: 100vh;
+  background: radial-gradient(circle at top left, rgba(0, 113, 227, 0.08), transparent 55%),
+    radial-gradient(circle at 80% 20%, rgba(52, 199, 89, 0.08), transparent 50%),
+    var(--bg-color);
 }
 
-/* iOS 17/18 Links - Smooth interactions */
+#app {
+  min-height: 100vh;
+  background: linear-gradient(145deg, rgba(245, 245, 247, 0.7), rgba(255, 255, 255, 0.8));
+}
+
 a {
   color: var(--primary-color);
   text-decoration: none;
-  transition: color 0.2s ease, opacity 0.15s ease;
+  transition: color 0.25s ease, opacity 0.2s ease;
 }
 
 a:hover {
@@ -59,41 +65,63 @@ a:hover {
 }
 
 a:active {
-  opacity: 0.7;
+  opacity: 0.75;
 }
 
-/* iOS 17/18 Buttons - Refined interactions */
 button {
   cursor: pointer;
   border: none;
   font-family: inherit;
-  font-size: inherit;
-  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  font-size: 1rem;
+  background: transparent;
+  color: inherit;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, opacity 0.2s ease;
 }
 
 button:disabled {
   cursor: not-allowed;
-  opacity: 0.6;
+  opacity: 0.5;
+  pointer-events: none;
 }
 
-/* iOS 17/18 Form Elements - Refined interactions */
 input,
-textarea {
+textarea,
+select {
   font-family: inherit;
   font-size: 1rem;
-  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: all 0.3s ease;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-light);
+  background-color: rgba(255, 255, 255, 0.9);
 }
 
-/* iOS 17/18 Accessibility - Focus indicators */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.12);
+  background-color: #fff;
+}
+
 *:focus-visible {
   outline: 2px solid var(--primary-color);
-  outline-offset: 2px;
+  outline-offset: 3px;
 }
 
-/* iOS 17/18 Scrollbar - Refined appearance */
+::selection {
+  background: rgba(0, 113, 227, 0.2);
+  color: var(--text-color);
+}
+
+::placeholder {
+  color: var(--text-lighter);
+  opacity: 1;
+}
+
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 12px;
+  height: 12px;
 }
 
 ::-webkit-scrollbar-track {
@@ -101,27 +129,13 @@ textarea {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.15);
-  border-radius: 5px;
-  border: 2px solid transparent;
+  background: rgba(15, 23, 42, 0.2);
+  border-radius: 999px;
+  border: 3px solid transparent;
   background-clip: padding-box;
   transition: background 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.25);
-  background-clip: padding-box;
-}
-
-/* iOS 17/18 Text Selection */
-::selection {
-  background: rgba(0, 122, 255, 0.3);
-  color: var(--text-color);
-}
-
-/* iOS 17/18 Placeholder Text */
-::placeholder {
-  color: var(--text-lighter);
-  opacity: 1;
-  font-weight: 400;
+  background: rgba(0, 113, 227, 0.4);
 }
