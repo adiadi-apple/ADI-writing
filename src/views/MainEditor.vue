@@ -1,10 +1,16 @@
 <template>
   <div class="editor-container">
-    <div class="sidebar">
+    <div class="ambient ambient-one"></div>
+    <div class="ambient ambient-two"></div>
+
+    <aside class="sidebar">
       <div class="sidebar-header">
-         <h1>ADI Writer</h1>
-         <button class="icon-btn" @click="showSettings = true" title="设置">⚙️</button>
-       </div>
+        <div class="sidebar-brand">
+          <p class="eyebrow">ADI Writer</p>
+          <h1>Story Studio</h1>
+        </div>
+        <button class="icon-btn" @click="showSettings = true" title="设置">⚙️</button>
+      </div>
 
       <div class="documents-section">
         <button class="new-doc-btn" @click="createNewDocument">
@@ -19,30 +25,44 @@
             :class="{ active: editorStore.currentDocumentId === doc.id }"
             @click="selectDocument(doc.id)"
           >
-            <div class="doc-title">{{ doc.title }}</div>
-            <div class="doc-meta">{{ formatDate(doc.updatedAt) }}</div>
+            <div>
+              <div class="doc-title">{{ doc.title }}</div>
+              <div class="doc-meta">更新于 {{ formatDate(doc.updatedAt) }}</div>
+            </div>
             <button class="delete-btn" @click.stop="deleteDocument(doc.id)" title="删除">
               ✕
             </button>
           </div>
         </div>
       </div>
-    </div>
+    </aside>
 
-    <div class="main-content">
-      <div v-if="currentDocument" class="editor">
-        <div class="editor-header">
-          <input
-            v-model="currentDocument.title"
-            @change="updateCurrentDocument"
-            class="title-input"
-            placeholder="输入文档标题"
-          />
+    <main class="main-content">
+      <div v-if="currentDocument" class="workspace">
+        <div class="workspace-header">
+          <div>
+            <p class="eyebrow">当前文档</p>
+            <div class="title-row">
+              <input
+                v-model="currentDocument.title"
+                @change="updateCurrentDocument"
+                class="title-input"
+                placeholder="输入文档标题"
+              />
+              <span class="doc-updated">更新于 {{ formatDate(currentDocument.updatedAt) }}</span>
+            </div>
+          </div>
+          <span class="status-pill" :class="{ 'is-busy': isProcessing }">
+            {{ isProcessing ? '正在与模型对话…' : '准备就绪' }}
+          </span>
         </div>
 
-        <div class="editor-body">
-          <div class="text-area-wrapper">
-            <label>原文内容</label>
+        <div class="panel-grid">
+          <div class="panel input-panel">
+            <div class="panel-header">
+              <p class="eyebrow">原文内容</p>
+              <h3>写下你想要扩写的文字</h3>
+            </div>
             <textarea
               v-model="currentDocument.content"
               @change="updateCurrentDocument"
@@ -51,39 +71,50 @@
             />
           </div>
 
-          <div class="controls">
-            <button
-              class="action-btn expand-btn"
-              @click="processContent('expand')"
-              :disabled="isProcessing || !currentDocument.content.trim()"
-            >
-              {{ isProcessing && currentMode === 'expand' ? '处理中...' : '✨ 扩写' }}
-            </button>
-            <button
-              class="action-btn polish-btn"
-              @click="processContent('polish')"
-              :disabled="isProcessing || !currentDocument.content.trim()"
-            >
-              {{ isProcessing && currentMode === 'polish' ? '处理中...' : '🔧 润色' }}
-            </button>
-          </div>
-
-          <div v-if="resultContent" class="result-section">
-            <div class="result-header">
-              <h3>处理结果</h3>
-              <button class="copy-btn" @click="copyResult" title="复制">📋</button>
+          <div class="panel result-panel">
+            <div class="panel-header">
+              <p class="eyebrow">AI 输出</p>
+              <div class="result-actions">
+                <h3>处理结果</h3>
+                <button class="copy-btn" @click="copyResult" :disabled="!resultContent">复制</button>
+              </div>
             </div>
-            <div class="result-content">{{ resultContent }}</div>
+            <div class="result-content" :class="{ 'is-empty': !resultContent }">
+              <p v-if="!resultContent">选择“扩写”或“润色”，结果会展示在这里。</p>
+              <p v-else>{{ resultContent }}</p>
+            </div>
           </div>
         </div>
+
+        <div class="controls">
+          <button
+            class="action-btn expand-btn"
+            @click="processContent('expand')"
+            :disabled="isProcessing || !currentDocument.content.trim()"
+          >
+            {{ isProcessing && currentMode === 'expand' ? '处理中...' : '✨ 扩写' }}
+          </button>
+          <button
+            class="action-btn polish-btn"
+            @click="processContent('polish')"
+            :disabled="isProcessing || !currentDocument.content.trim()"
+          >
+            {{ isProcessing && currentMode === 'polish' ? '处理中...' : '🔧 润色' }}
+          </button>
+        </div>
+
+        <p class="hint-text">按钮动画遵循柔和交互曲线，确保灵动又克制。</p>
       </div>
 
       <div v-else class="empty-state">
-        <div class="empty-icon">📝</div>
-        <h2>暂无文档</h2>
-        <p>点击左侧"新建文档"开始创建</p>
+        <div class="empty-card">
+          <div class="empty-icon">📝</div>
+          <h2>欢迎来到 ADI Writer</h2>
+          <p>在左侧创建第一个文档，体验纯净的创作空间。</p>
+          <button class="ghost-btn" @click="createNewDocument">新建文档</button>
+        </div>
       </div>
-    </div>
+    </main>
 
     <div v-if="showSettings" class="modal" @click.self="showSettings = false">
       <div class="modal-content">
@@ -268,127 +299,138 @@ const logout = () => {
 
 <style scoped>
 .editor-container {
+  position: relative;
   display: flex;
-  height: 100vh;
-  background: linear-gradient(135deg, var(--bg-color) 0%, #f9f9fb 100%);
+  min-height: 100vh;
+  background: linear-gradient(135deg, #eef1f5 0%, #fafafa 50%, #f5f5f7 100%);
   overflow: hidden;
+  color: var(--text-color);
+}
+
+.ambient {
+  position: absolute;
+  filter: blur(80px);
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.ambient-one {
+  width: 420px;
+  height: 420px;
+  background: radial-gradient(circle, rgba(0, 113, 227, 0.4), transparent 65%);
+  top: -140px;
+  left: -110px;
+}
+
+.ambient-two {
+  width: 360px;
+  height: 360px;
+  background: radial-gradient(circle, rgba(52, 199, 89, 0.35), transparent 65%);
+  bottom: -110px;
+  right: -80px;
 }
 
 .sidebar {
-  width: 280px;
-  background: linear-gradient(180deg, var(--bg-white) 0%, #f9f9fb 100%);
-  border-right: 1px solid rgba(0, 0, 0, 0.06);
+  width: 300px;
+  background: rgba(255, 255, 255, 0.68);
+  backdrop-filter: blur(36px);
+  border-right: 1px solid rgba(255, 255, 255, 0.7);
+  padding: 32px 24px;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
-  box-shadow: 1px 0 3px rgba(0, 0, 0, 0.02);
+  gap: 20px;
+  z-index: 2;
 }
 
 .sidebar-header {
-  padding: 20px 16px;
-  border-bottom: 1px solid var(--border-light);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.8) 0%, transparent 100%);
+  margin-bottom: 12px;
 }
 
-.sidebar-header h1 {
+.sidebar-brand h1 {
   font-size: 1.35rem;
-  margin: 0;
-  color: var(--primary-color);
-  font-weight: 800;
-  letter-spacing: -0.3px;
+  letter-spacing: -0.02em;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-size: 0.72rem;
+  color: var(--text-light);
 }
 
 .icon-btn {
-  background: none;
-  border: none;
-  font-size: 1.3rem;
-  cursor: pointer;
+  font-size: 1.2rem;
   padding: 6px 10px;
-  transition: all 0.2s ease;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  border-radius: 10px;
+  color: var(--text-light);
+  background: rgba(0, 0, 0, 0.03);
 }
 
 .icon-btn:hover {
-  background: rgba(0, 122, 255, 0.1);
-  transform: scale(1.08);
-}
-
-.icon-btn:active {
-  background: rgba(0, 122, 255, 0.15);
+  background: rgba(0, 113, 227, 0.12);
+  color: var(--primary-color);
 }
 
 .documents-section {
   flex: 1;
-  padding: 15px;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
 }
 
 .new-doc-btn {
   width: 100%;
-  padding: 13px 16px;
-  background: linear-gradient(135deg, #007aff 0%, #0051cc 100%);
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #0071e3, #2b6aff);
   color: white;
-  border: none;
-  border-radius: 12px;
   font-weight: 700;
-  font-size: 0.95rem;
-  margin-bottom: 16px;
-  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.25);
-  letter-spacing: 0.3px;
+  letter-spacing: 0.02em;
+  box-shadow: 0 18px 30px rgba(0, 113, 227, 0.25);
 }
 
 .new-doc-btn:hover {
-  transform: translateY(-1.5px);
-  box-shadow: 0 6px 20px rgba(0, 122, 255, 0.35);
-}
-
-.new-doc-btn:active {
-  transform: translateY(-0.5px);
-  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.2);
+  transform: translateY(-1px);
 }
 
 .documents-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
 .document-item {
-  padding: 12px 14px;
-  background: linear-gradient(135deg, #f5f5f7 0%, #f0f0f3 100%);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  border-radius: 11px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.7);
   cursor: pointer;
-  transition: all 0.3s ease;
-  position: relative;
-  group: 'item';
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 .document-item:hover {
-  background: linear-gradient(135deg, rgba(0, 122, 255, 0.08) 0%, rgba(0, 122, 255, 0.05) 100%);
-  border-color: rgba(0, 122, 255, 0.3);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(0, 122, 255, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 15px 25px rgba(15, 23, 42, 0.08);
 }
 
 .document-item.active {
-  background: linear-gradient(135deg, rgba(0, 122, 255, 0.15) 0%, rgba(0, 122, 255, 0.1) 100%);
-  border-color: var(--primary-color);
-  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.18);
+  border-color: rgba(0, 113, 227, 0.4);
+  box-shadow: 0 20px 35px rgba(0, 113, 227, 0.15);
 }
 
 .doc-title {
   font-weight: 600;
-  color: var(--text-color);
-  margin-bottom: 4px;
-  word-break: break-word;
+  letter-spacing: -0.01em;
 }
 
 .doc-meta {
@@ -397,276 +439,251 @@ const logout = () => {
 }
 
 .delete-btn {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: none;
-  border: none;
   color: var(--danger-color);
-  cursor: pointer;
-  font-size: 1rem;
   opacity: 0;
-  transition: opacity 0.2s;
+  transition: opacity 0.2s ease;
 }
 
 .document-item:hover .delete-btn {
-  opacity: 1;
+  opacity: 0.9;
 }
 
 .main-content {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.editor {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  padding: 20px;
-  gap: 15px;
-}
-
-.editor-header {
+  padding: 32px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  z-index: 1;
+}
+
+.workspace {
+  width: 100%;
+  max-width: 1100px;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 36px;
+  padding: 36px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: var(--shadow-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.workspace-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .title-input {
+  border: none;
+  background: rgba(0, 0, 0, 0.02);
+  padding: 14px 18px;
+  border-radius: 16px;
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
   flex: 1;
-  padding: 13px 16px;
-  font-size: 1.35rem;
-  font-weight: 800;
-  letter-spacing: -0.3px;
-  border: 1.5px solid transparent;
-  border-radius: 12px;
-  transition: all 0.3s ease;
-  background-color: transparent;
-  color: var(--text-color);
-}
-
-.title-input:hover {
-  border-color: rgba(0, 122, 255, 0.2);
-  background-color: rgba(255, 255, 255, 0.5);
 }
 
 .title-input:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  background-color: var(--bg-white);
-  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.12), inset 0 0 0 0.5px var(--primary-color);
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.1);
 }
 
-.editor-body {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  flex: 1;
-  min-height: 0;
+.doc-updated {
+  font-size: 0.85rem;
+  color: var(--text-light);
 }
 
-.text-area-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex: 1;
-  min-height: 0;
-}
-
-.text-area-wrapper label {
+.status-pill {
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-size: 0.9rem;
   font-weight: 600;
-  color: var(--text-color);
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text-light);
+}
+
+.status-pill.is-busy {
+  background: rgba(0, 113, 227, 0.12);
+  color: var(--primary-color);
+}
+
+.panel-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  gap: 24px;
+}
+
+.panel {
+  padding: 24px;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.panel-header h3 {
+  font-size: 1.1rem;
+  letter-spacing: -0.01em;
 }
 
 .editor-textarea {
   flex: 1;
-  padding: 16px 18px;
-  border: 1.5px solid rgba(0, 0, 0, 0.05);
-  border-radius: 12px;
-  font-size: 1rem;
-  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+  min-height: 280px;
+  border: none;
   resize: none;
-  transition: all 0.3s ease;
-  background-color: linear-gradient(135deg, #f9f9fb 0%, #f5f5f7 100%);
+  font-size: 1rem;
+  font-family: 'SF Mono', 'Menlo', 'Courier New', monospace;
+  background: linear-gradient(145deg, #fefefe, #f5f7fb);
+  border-radius: 20px;
+  padding: 18px 20px;
   line-height: 1.6;
   color: var(--text-color);
-}
-
-.editor-textarea:hover {
-  border-color: rgba(0, 122, 255, 0.25);
-  background: linear-gradient(135deg, #ffffff 0%, #f8f8fa 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
 .editor-textarea:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  background-color: var(--bg-white);
-  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.12), inset 0 0 0 0.5px var(--primary-color);
+  box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.12);
 }
 
+.result-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.result-content {
+  flex: 1;
+  padding: 18px;
+  border-radius: 20px;
+  background: #f4f6fb;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  color: var(--text-color);
+  line-height: 1.6;
+  overflow-y: auto;
+}
+
+.result-content.is-empty {
+  color: var(--text-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
 .controls {
   display: flex;
-  gap: 10px;
+  gap: 16px;
 }
 
 .action-btn {
   flex: 1;
-  padding: 13px 20px;
-  font-size: 1rem;
+  padding: 16px 24px;
+  border-radius: 16px;
   font-weight: 700;
-  border-radius: 12px;
   color: white;
-  border: none;
-  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-  letter-spacing: 0.3px;
+  letter-spacing: 0.02em;
+  box-shadow: 0 18px 30px rgba(0, 0, 0, 0.12);
 }
 
 .expand-btn {
-  background: linear-gradient(135deg, #007aff 0%, #0051cc 100%);
-  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.25);
-}
-
-.expand-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0, 122, 255, 0.35);
-}
-
-.expand-btn:active:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.2);
+  background: linear-gradient(135deg, #0071e3, #2b6aff);
 }
 
 .polish-btn {
-  background: linear-gradient(135deg, #34c759 0%, #30b050 100%);
-  box-shadow: 0 4px 12px rgba(52, 199, 89, 0.25);
+  background: linear-gradient(135deg, #34c759, #2db257);
 }
 
-.polish-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(52, 199, 89, 0.35);
-}
-
-.polish-btn:active:not(:disabled) {
+.action-btn:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(52, 199, 89, 0.2);
 }
 
-.action-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.result-section {
-  background: linear-gradient(135deg, var(--bg-white) 0%, #f9f9fb 100%);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  border-radius: 12px;
-  padding: 16px 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  max-height: 300px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  backdrop-filter: blur(2px);
-}
-
-.result-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.result-header h3 {
-  margin: 0;
-  font-size: 1rem;
-  color: var(--text-color);
-}
-
-.copy-btn {
-  background: none;
-  border: none;
-  font-size: 1.2rem;
-  cursor: pointer;
-  transition: transform 0.2s;
-}
-
-.copy-btn:hover {
-  transform: scale(1.2);
-}
-
-.result-content {
-  overflow-y: auto;
-  padding: 12px 14px;
-  background: linear-gradient(135deg, #f9f9fb 0%, #f5f5f7 100%);
-  border-radius: 10px;
-  line-height: 1.7;
-  color: var(--text-color);
-  font-size: 0.95rem;
-  white-space: pre-wrap;
-  word-break: break-word;
-  max-height: 250px;
-  border: 1px solid rgba(0, 0, 0, 0.04);
-}
-
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
+.hint-text {
+  font-size: 0.9rem;
   color: var(--text-light);
 }
 
-.empty-icon {
-  font-size: 4rem;
-  margin-bottom: 20px;
+.copy-btn {
+  padding: 8px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.8);
+  font-weight: 600;
 }
 
-.empty-state h2 {
-  font-size: 1.5rem;
-  color: var(--text-color);
-  margin-bottom: 10px;
+.copy-btn:hover:not(:disabled) {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.empty-state {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-card {
+  padding: 48px;
+  border-radius: 32px;
+  background: rgba(255, 255, 255, 0.9);
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: var(--shadow-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 420px;
+}
+
+.empty-icon {
+  font-size: 2.5rem;
+}
+
+.ghost-btn {
+  padding: 14px 18px;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 113, 227, 0.4);
+  color: var(--primary-color);
+  font-weight: 600;
+  background: transparent;
 }
 
 .modal {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   background: rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  backdrop-filter: blur(6px);
-  animation: fadeIn 0.3s ease-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    backdrop-filter: blur(0px);
-  }
-  to {
-    opacity: 1;
-    backdrop-filter: blur(6px);
-  }
 }
 
 .modal-content {
-  background: var(--bg-white);
-  border-radius: 24px;
-  width: 100%;
-  max-width: 500px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  width: 90%;
+  max-width: 460px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 28px;
   border: 1px solid rgba(255, 255, 255, 0.7);
-  animation: slideUp 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow: var(--shadow-elevated);
+  animation: fadeUp 0.3s ease;
 }
 
-@keyframes slideUp {
+@keyframes fadeUp {
   from {
     transform: translateY(20px);
     opacity: 0;
@@ -678,162 +695,99 @@ const logout = () => {
 }
 
 .modal-header {
+  padding: 24px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24px 26px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.modal-header h2 {
-  margin: 0;
-  font-size: 1.25rem;
-  color: var(--text-color);
-  font-weight: 800;
-  letter-spacing: -0.2px;
 }
 
 .close-btn {
-  background: none;
-  border: none;
   font-size: 1.5rem;
-  cursor: pointer;
   color: var(--text-light);
   padding: 6px 10px;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  border-radius: 999px;
 }
 
 .close-btn:hover {
-  color: var(--text-color);
   background: rgba(0, 0, 0, 0.05);
 }
 
 .modal-body {
-  padding: 20px;
+  padding: 24px;
 }
 
 .setting-item {
   margin-bottom: 20px;
 }
 
-.setting-item label {
-  display: block;
-  font-weight: 600;
-  margin-bottom: 8px;
-  color: var(--text-color);
-}
-
 .provider-badge {
-  display: inline-block;
-  background: rgba(0, 122, 255, 0.1);
+  display: inline-flex;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 14px;
+  background: rgba(0, 113, 227, 0.1);
   color: var(--primary-color);
-  padding: 8px 12px;
-  border-radius: 8px;
   font-weight: 600;
-  border: 1px solid rgba(0, 122, 255, 0.2);
 }
 
 .input {
   width: 100%;
-  padding: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
   border: 1px solid rgba(0, 0, 0, 0.06);
-  border-radius: 8px;
-  font-size: 0.95rem;
-  background-color: #f5f5f7;
-  transition: all 0.3s ease;
-}
-
-.input:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  background-color: var(--bg-white);
-  box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.08);
+  background: rgba(0, 0, 0, 0.02);
 }
 
 .setting-actions {
   display: flex;
-  gap: 10px;
-  margin-top: 25px;
+  gap: 12px;
 }
 
 .btn {
   flex: 1;
-  padding: 12px 16px;
-  border: none;
-  border-radius: 11px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 0.95rem;
+  padding: 14px 16px;
+  border-radius: 14px;
+  font-weight: 600;
 }
 
 .btn-secondary {
-  background: linear-gradient(135deg, #f5f5f7 0%, #f0f0f3 100%);
-  color: var(--text-color);
-  border: 1.5px solid rgba(0, 0, 0, 0.05);
-}
-
-.btn-secondary:hover {
-  border-color: var(--primary-color);
-  background: linear-gradient(135deg, rgba(0, 122, 255, 0.08) 0%, rgba(0, 122, 255, 0.05) 100%);
-  color: var(--primary-color);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(0, 0, 0, 0.03);
 }
 
 .btn-danger {
-  background: linear-gradient(135deg, #ff3b30 0%, #ff1a1a 100%);
-  color: white;
-  box-shadow: 0 4px 12px rgba(255, 59, 48, 0.25);
-}
-
-.btn-danger:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(255, 59, 48, 0.35);
+  background: linear-gradient(135deg, #ff3b30, #d91a12);
+  color: #fff;
 }
 
 .toast {
   position: fixed;
   bottom: 24px;
   right: 24px;
-  padding: 16px 20px;
-  border-radius: 14px;
-  color: white;
+  padding: 16px 22px;
+  border-radius: 18px;
+  color: #fff;
   display: flex;
   align-items: center;
   gap: 12px;
   z-index: 2000;
-  animation: slideInToast 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
-  backdrop-filter: blur(10px);
-  max-width: 320px;
-  font-weight: 600;
+  backdrop-filter: blur(18px);
+  box-shadow: 0 20px 35px rgba(0, 0, 0, 0.2);
+  animation: slideInToast 0.3s ease;
 }
 
 .toast.error {
-  background: linear-gradient(135deg, #ff3b30 0%, #ff1a1a 100%);
-  box-shadow: 0 12px 32px rgba(255, 59, 48, 0.35);
+  background: linear-gradient(135deg, #ff3b30, #d91a12);
 }
 
 .toast.success {
-  background: linear-gradient(135deg, #34c759 0%, #30b050 100%);
-  box-shadow: 0 12px 32px rgba(52, 199, 89, 0.35);
+  background: linear-gradient(135deg, #34c759, #249a43);
 }
 
 .toast .close {
-  background: none;
-  border: none;
-  color: white;
-  cursor: pointer;
-  font-size: 1.2rem;
+  color: inherit;
   opacity: 0.85;
-  padding: 4px 8px;
-  margin-left: 8px;
-  transition: opacity 0.2s ease;
 }
 
 .toast .close:hover {
@@ -842,7 +796,7 @@ const logout = () => {
 
 @keyframes slideInToast {
   from {
-    transform: translateX(400px);
+    transform: translateX(120px);
     opacity: 0;
   }
   to {
@@ -850,29 +804,42 @@ const logout = () => {
     opacity: 1;
   }
 }
-
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .editor-container {
     flex-direction: column;
   }
 
   .sidebar {
     width: 100%;
-    max-height: 200px;
-    border-right: none;
-    border-bottom: 1px solid var(--border-color);
+    flex-direction: row;
+    justify-content: space-between;
+    flex-wrap: wrap;
   }
 
-  .editor {
-    padding: 15px;
+  .documents-section {
+    width: 100%;
+  }
+
+  .panel-grid {
+    grid-template-columns: 1fr;
   }
 
   .controls {
     flex-direction: column;
   }
+}
 
-  .modal-content {
-    margin: 20px;
+@media (max-width: 640px) {
+  .main-content {
+    padding: 20px;
+  }
+
+  .workspace {
+    padding: 24px;
+  }
+
+  .sidebar {
+    padding: 20px;
   }
 }
 </style>
