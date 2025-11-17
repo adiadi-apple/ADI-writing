@@ -1,0 +1,21 @@
+{
+  "name": "adi-docs",
+  "version": "1.0.0",
+  "description": "ADI Writer - Documentation and Deployment Guide",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vuepress dev",
+    "build": "vuepress build",
+    "preview": "vuepress preview"
+  },
+  "dependencies": {
+    "vue": "^3.3.4"
+  },
+  "devDependencies": {
+    "vuepress": "2.0.0-rc.14",
+    "@vuepress/plugin-search": "2.0.0-rc.14",
+    "@vuepress/theme-default": "2.0.0-rc.14",
+    "typescript": "~4.9.5"
+  }
+}
